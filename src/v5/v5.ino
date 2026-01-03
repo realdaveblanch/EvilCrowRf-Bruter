@@ -303,6 +303,7 @@ void menu5() {
 void menu6() {
     while(true) {
         dualPrintln("\n[6] ALTA SEGURIDAD / 868 MHz");
+        dualPrintln("[!] WARN: Rolling Code NO abrira (Solo Fixed)");
         dualPrintln("1. Hormann HSM - 868.35 MHz");
         dualPrintln("2. Marantec - 868.35 MHz");
         dualPrintln("3. Berner - 868.35 MHz");
