@@ -39,6 +39,9 @@
 #include "protocols/Phox.h"
 #include "protocols/Unilarm.h"
 
+// [NUEVO] Prototipo para el módulo De Bruijn
+void menuDeBruijn();
+
 #define RF2_CS   27
 #define RF2_GDO0 26
 #define RF2_TX   25 
@@ -353,6 +356,7 @@ void showMainMenu() {
     dualPrintln("7. Intertechno V3 (32 bits)");
     dualPrintln("8. Alarmas 24 bits (EV1527)");
     dualPrintln("9. Otros (StarLine, Tedsen, Airforce)");
+    dualPrintln("D. DE BRUIJN ATTACK (Universal / Presets)");
     dualPrintln("R. Ajustar REPETICIONES (Actual: " + String(globalRepeats) + ")");
     dualPrintln("==========================================");
 }
@@ -425,6 +429,7 @@ void loop() {
             case '7': menu7(); break;
             case '8': menu8(); break;
             case '9': menu9(); break;
+            case 'D': case 'd': menuDeBruijn(); break;
             case 'R': case 'r': subMenuRepeats(); break;
         }
         showMainMenu();
