@@ -38,14 +38,15 @@
 #include "protocols/Magellen.h"
 #include "protocols/Phox.h"
 #include "protocols/Unilarm.h"
+#include "config.h" // [NUEVO] Configuración centralizada
 
-// [NUEVO] Prototipo para el módulo De Bruijn
+// [NUEVO] Prototipos externos
 void menuDeBruijn();
+void runScanner();
 
-#define RF2_CS   27
-#define RF2_GDO0 26
-#define RF2_TX   25 
-#define FREQ_OFFSET 0.052 
+#define RF2_CS   PIN_RF_CS
+#define RF2_GDO0 PIN_RF_GDO0
+#define RF2_TX   PIN_RF_TX
 
 // [NUEVO] Objeto Bluetooth
 BluetoothSerial SerialBT;
@@ -88,7 +89,7 @@ void clearBuffers() {
 }
 
 void setFrequencyCorrected(float target_mhz) {
-    float corrected_mhz = target_mhz - FREQ_OFFSET;
+    float corrected_mhz = target_mhz - CC1101_FREQ_OFFSET;
     if (corrected_mhz == current_mhz) return;
     ELECHOUSE_cc1101.setMHZ(corrected_mhz);
     current_mhz = corrected_mhz;
@@ -96,8 +97,8 @@ void setFrequencyCorrected(float target_mhz) {
 }
 
 void setupCC1101() {
-    SPI.begin(14, 12, 13);
-    ELECHOUSE_cc1101.addSpiPin(14, 12, 13, RF2_CS, 1);
+    SPI.begin(PIN_RF_SCK, PIN_RF_MISO, PIN_RF_MOSI);
+    ELECHOUSE_cc1101.addSpiPin(PIN_RF_SCK, PIN_RF_MISO, PIN_RF_MOSI, RF2_CS, 1);
     ELECHOUSE_cc1101.addGDO0(RF2_GDO0, 1);
     ELECHOUSE_cc1101.setModul(1); 
     if (!ELECHOUSE_cc1101.getCC1101()) while (1) { dualPrintln("ERROR: CC1101 no detectado"); delay(1000); }
@@ -357,6 +358,7 @@ void showMainMenu() {
     dualPrintln("7. Intertechno V3 (32 bits)");
     dualPrintln("8. Alarmas 24 bits (EV1527)");
     dualPrintln("9. Otros (StarLine, Tedsen, Airforce)");
+    dualPrintln("S. RF SIGNAL SCANNER (Find Freq)");
     dualPrintln("D. DE BRUIJN ATTACK (Universal / Presets)");
     dualPrintln("R. Ajustar REPETICIONES (Actual: " + String(globalRepeats) + ")");
     dualPrintln("==========================================");
@@ -407,7 +409,7 @@ void setup() {
     
     // [NUEVO] Iniciar Bluetooth
     // El nombre que veras en el movil es "Mega-Brute-Force-RF" 
-    SerialBT.begin("Mega-Brute-Force-RF"); 
+    SerialBT.begin(BT_DEVICE_NAME); 
     
     delay(2000);
     setupCC1101();
@@ -430,6 +432,7 @@ void loop() {
             case '7': menu7(); break;
             case '8': menu8(); break;
             case '9': menu9(); break;
+            case 'S': case 's': runScanner(); break;
             case 'D': case 'd': menuDeBruijn(); break;
             case 'R': case 'r': subMenuRepeats(); break;
         }
