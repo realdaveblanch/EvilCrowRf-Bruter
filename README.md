@@ -1,4 +1,4 @@
-# Mega Brute Force RF 2026 - Ultimate Edition
+# EvilCrowRf Bruter - Open Source Edition
 
 ![Status](https://img.shields.io/badge/Status-Stable-green.svg) ![Platform](https://img.shields.io/badge/Platform-ESP32%20%7C%20CC1101-blue.svg) ![Protocols](https://img.shields.io/badge/Protocols-34%20Supported-orange.svg) ![License](https://img.shields.io/badge/License-MIT-lightgrey.svg) ![Documentation](https://img.shields.io/badge/Documentation-Encyclopedia-purple.svg)
 
@@ -7,6 +7,8 @@
 **Autor Principal:** David Rodríguez Pérez  
 **Arquitectura:** EvilCrowRfV2 - Espressif ESP32 (PICO D4) + Texas Instruments CC1101  
 
+Based on original EvilCrowRFV2 Hardware from: https://github.com/joelsernamoreno/EvilCrowRF-V2
+*Original protocol structure from BruceOS: https://github.com/BruceDevices/firmware
 
 ---
 
