@@ -1,5 +1,4 @@
-# EvilCrowRf Bruter - Open Source Edition
-# EvilCrowRf Bruter - Open Source Edition
+# Mega Brute Force RF 2026 - Ultimate Edition
 
 ![Status](https://img.shields.io/badge/Status-Stable-green.svg) ![Platform](https://img.shields.io/badge/Platform-ESP32%20%7C%20CC1101-blue.svg) ![Protocols](https://img.shields.io/badge/Protocols-34%20Supported-orange.svg) ![License](https://img.shields.io/badge/License-MIT-lightgrey.svg) ![Documentation](https://img.shields.io/badge/Documentation-Encyclopedia-purple.svg)
 
@@ -341,5 +340,5 @@ El sistema primarily exploits **OOK (On-Off Keying)**, the simplest form of Ampl
 The author, **David Rodríguez Pérez**, is not responsible for any illegal use of this tool. Attempting to open gates, barriers, or doors that do not belong to you is a crime in most jurisdictions. Use this tool only on equipment you own or have explicit permission to audit.
 
 ---
-*Generated: January 6rd, 2026*  
-*Project: EvilCrowRf Bruter - Open Source Edition v1.0*
+*Generated: January 3rd, 2026*  
+*Project: Mega Brute Force RF v5.0*
