@@ -57,7 +57,7 @@ std::vector<uint8_t> generateDeBruijn(int n) {
     int total_unique = 1 << n;
     uint8_t* visited = (uint8_t*)calloc(total_unique / 8 + 1, 1); 
     
-    if (!visited) { dualPrintln("[!] Insuficient memory for De Bruijn."); return sequence; }
+    if (!visited) { dualPrintln("[!] Insufficient memory for De Bruijn."); return sequence; }
 
     // Preámbulo de ceros para llenar la ventana inicial
     for (int i=0; i < n; i++) sequence.push_back(0); 
@@ -136,7 +136,7 @@ void runDeBruijn(c_rf_protocol* proto, const char* name, int n, float freq, int 
     setFrequencyCorrected(freq);
     
     sendDeBruijnSequence(proto, seq, repeats);
-    dualPrintln("[DeBruijn] Finalizado.");
+    dualPrintln("[DeBruijn] Done.");
 }
 
 // --- MENÚS ---

@@ -138,7 +138,7 @@ int checkPause() {
 bool attackBinary(c_rf_protocol* proto, const char* name, int bits, float mhz) {
     setFrequencyCorrected(mhz);
     uint32_t total = (1 << bits);
-    dualPrintf("\n>>> Iniciating %s (%d bits) at %.2f MHz <<<", name, bits, mhz);
+    dualPrintf("\n>>> Initiating %s (%d bits) at %.2f MHz <<<", name, bits, mhz);
     for (uint32_t i = 0; i < total; i++) {
         if (i % 500 == 0) dualPrintf("  [%s] %.1f%%\n", name, (i * 100.0) / total);
         
@@ -165,7 +165,7 @@ bool attackTristate(c_rf_protocol* proto, const char* name, int positions, float
     setFrequencyCorrected(mhz);
     uint32_t total = 1;
     for(int p=0; p<positions; p++) total *= 3;
-    dualPrintf("\n>>> Iniciating %s (%d pos) at %.2f MHz <<<", name, positions, mhz);
+    dualPrintf("\n>>> Initiating %s (%d pos) at %.2f MHz <<<", name, positions, mhz);
     for (uint32_t i = 0; i < total; i++) {
         if (i % 500 == 0) dualPrintf("  [%s] %.1f%%\n", name, (i * 100.0) / total);
         
