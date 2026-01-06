@@ -1,4 +1,4 @@
-# Mega Brute Force RF 2026 - Ultimate Edition
+# EvilCrowRf Bruter - Open Source Edition
 
 ![Status](https://img.shields.io/badge/Status-Stable-green.svg) ![Platform](https://img.shields.io/badge/Platform-ESP32%20%7C%20CC1101-blue.svg) ![Protocols](https://img.shields.io/badge/Protocols-34%20Supported-orange.svg) ![License](https://img.shields.io/badge/License-MIT-lightgrey.svg) ![Documentation](https://img.shields.io/badge/Documentation-Encyclopedia-purple.svg)
 
