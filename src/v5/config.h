@@ -1,7 +1,7 @@
 #pragma once
 
 // --- SECURITY & OPSEC ---
-#define BT_DEVICE_NAME "JBL_GO_3_PRO"  // Discreto
+#define BT_DEVICE_NAME "EvilCrowRf Bruter - Open Source Edition"  // Discreto
 
 // --- RF HARDWARE CONFIG ---
 #define CC1101_FREQ_OFFSET 0.052  // Ajustar con SDR si es posible

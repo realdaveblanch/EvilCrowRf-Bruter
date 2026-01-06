@@ -1,11 +1,12 @@
-# Mega Brute Force RF 2026 - Ultimate Edition
+# EvilCrowRf Bruter - Open Source Edition
+# EvilCrowRf Bruter - Open Source Edition
 
 ![Status](https://img.shields.io/badge/Status-Stable-green.svg) ![Platform](https://img.shields.io/badge/Platform-ESP32%20%7C%20CC1101-blue.svg) ![Protocols](https://img.shields.io/badge/Protocols-34%20Supported-orange.svg) ![License](https://img.shields.io/badge/License-MIT-lightgrey.svg) ![Documentation](https://img.shields.io/badge/Documentation-Encyclopedia-purple.svg)
 
 **Versión:** 1.0 
-**Fecha de Revisión:** 3 de Enero de 2026  
+**Fecha de Revisión:** 6 de Enero de 2026  
 **Autor Principal:** David Rodríguez Pérez  
-**Arquitectura:** Espressif ESP32 (PICO D4) + Texas Instruments CC1101  
+**Arquitectura:** EvilCrowRfV2 - Espressif ESP32 (PICO D4) + Texas Instruments CC1101  
 
 
 ---
@@ -28,14 +29,14 @@
 
 ## 1. Introducción y Alcance del Proyecto
 
-El proyecto **Mega Brute Force RF** no es simplemente una herramienta de hacking; es un compendio de investigación sobre la inseguridad inherente en los sistemas de control de acceso inalámbrico que dominaron el mercado entre 1990 y 2015, y que aún persisten en millones de instalaciones.
+El proyecto **EvilCrowRf Bruter - Open Source Edition** no es simplemente una herramienta de hacking; es un compendio de investigación sobre la inseguridad inherente en los sistemas de control de acceso inalámbrico que dominaron el mercado entre 1990 y 2015, y que aún persisten en millones de instalaciones.
 
 Diseñado y programado por **David Rodríguez Pérez**, este sistema utiliza un microcontrolador de doble núcleo (ESP32) para sintetizar señales de radiofrecuencia complejas en tiempo real, inyectándolas en el espectro electromagnético a través del transceptor CC1101. El objetivo es demostrar empíricamente cómo la entropía limitada de los códigos fijos (Fixed Code) y los sistemas Tristate (ternarios) hace trivial su compromiso mediante ataques de fuerza bruta (barrido exhaustivo del espacio de claves).
 
 ### 1.1 Objetivos Técnicos
 *   **Universalidad:** Capacidad de modular señales en múltiples frecuencias (300 MHz - 928 MHz) sin cambios de hardware.
 *   **Precisión:** Generación de pulsos con tolerancias de $\pm 10 \mu s$ para engañar a los filtros de los receptores.
-<!-- *   **Autonomía:** Ejecución completa desde el microcontrolador sin necesidad de un PC host durante el ataque. -->
+
 
 ---
 
@@ -224,12 +225,19 @@ Donde:
 2.  **Software:** Compilar el proyecto usando PlatformIO o Arduino IDE 2.x.
     *   *Nota:* Asegúrese de que la librería `ELECHOUSE_CC1101` está correctamente importada en `src`.
 
+3. **Uso Bluetooth** 
+    Descargar cualquier aplicación que permita puente serial por Bluetooth:
+
+    https://play.google.com/store/apps/details?id=de.kai_morich.serial_bluetooth_terminal&hl=es&pli=1
+
+    Y mismo uso que por serial USB. (Puede ser necesario enviar algun caracter para que se renderice el menú)
+
 ### 6.2 Interfaz de Usuario (CLI)
 Al iniciar, abra el monitor serie a **115200 baudios**. Verá el siguiente menú:
 
 ```text
 ==========================================
-   MEGA BRUTE FORCE 2026 - ULTIMATE      
+EvilCrowRf Bruter - Open Source Edition      
 ==========================================
 1. Europe Mandos (CAME, Nice, Clemsa...)
 2. Tristate / Chinos (Princeton, SMC...)
@@ -265,7 +273,7 @@ R. Ajustar REPETICIONES (Actual: 4)
 
 ### La puerta no se abre tras el 100%
 *   **Causa 1:** El sistema usa Rolling Code (HCS301, Keeloq). Este ataque NO funciona contra Rolling Code.
-*   **Causa 2:** La frecuencia está ligeramente desplazada. Intente editar `*.ino*` y ajustar `FREQ_OFFSET` (ej. de 0.052 a 0.030).
+*   **Causa 2:** La frecuencia está ligeramente desplazada. Intente editar `*.ino` y ajustar `FREQ_OFFSET` (ej. de 0.052 a 0.030).
 *   **Causa 3:** El receptor requiere más repeticiones. Use la opción 'R' del menú y suba a 6 o 8 repeticiones.
 
 ---
@@ -274,7 +282,7 @@ R. Ajustar REPETICIONES (Actual: 4)
 
 ## 1. Introduction and Scope
 
-**Mega Brute Force RF** is a comprehensive research project into the vulnerabilities of ISM band wireless access control systems. Developed by **David Rodríguez Pérez**, this ESP32-based firmware acts as a high-speed signal synthesizer capable of exhausting the key space of Fixed Code protocols.
+**EvilCrowRf Bruter - Open Source Edition** is a comprehensive research project into the vulnerabilities of ISM band wireless access control systems. Developed by **David Rodríguez Pérez**, this ESP32-based firmware acts as a high-speed signal synthesizer capable of exhausting the key space of Fixed Code protocols.
 
 The tool is strictly designed for **educational purposes** and security auditing of authorized equipment.
 
@@ -320,11 +328,18 @@ El sistema primarily exploits **OOK (On-Off Keying)**, the simplest form of Ampl
     *   Navigate the menu using number keys.
     *   The system will automatically configure the CC1101 registers (Frequency, Deviation, Modulation) for the selected protocol and begin the attack sequence.
 
+4.  **Bluetooth Usage**
+    Download any application that allows a serial bridge over Bluetooth:
+
+    https://play.google.com/store/apps/details?id=de.kai_morich.serial_bluetooth_terminal&hl=es&pli=1
+
+    Use it in the same way as with USB serial. (It may be necessary to send some character in order for the menu to be rendered)
+
 ## 5. Disclaimer
 
 **DISCLAIMER:** This software is for **EDUCATIONAL USE ONLY**.
 The author, **David Rodríguez Pérez**, is not responsible for any illegal use of this tool. Attempting to open gates, barriers, or doors that do not belong to you is a crime in most jurisdictions. Use this tool only on equipment you own or have explicit permission to audit.
 
 ---
-*Generated: January 3rd, 2026*  
-*Project: Mega Brute Force RF v5.0*
+*Generated: January 6rd, 2026*  
+*Project: EvilCrowRf Bruter - Open Source Edition v1.0*

@@ -50,14 +50,14 @@ std::vector<uint8_t> generateDeBruijn(int n) {
     // 16 bits = 65536 bytes de vector. 17 bits = 131KB (Peligro). 18 bits = CRASH.
     // Con Bluetooth activado, el heap libre ronda los 100-150KB.
     if (n > 16) {
-        dualPrintln("[!] ERROR: >16 bits excede la RAM del ESP32 con BT activo.");
+        dualPrintln("[!] ERROR: >16 bits exceeds RAM.");
         return sequence;
     }
 
     int total_unique = 1 << n;
     uint8_t* visited = (uint8_t*)calloc(total_unique / 8 + 1, 1); 
     
-    if (!visited) { dualPrintln("[!] Memoria insuficiente para De Bruijn."); return sequence; }
+    if (!visited) { dualPrintln("[!] Insuficient memory for De Bruijn."); return sequence; }
 
     // Preámbulo de ceros para llenar la ventana inicial
     for (int i=0; i < n; i++) sequence.push_back(0); 
@@ -203,7 +203,7 @@ void menuDeBruijn() {
         dualPrintln("3. Holtek 12-bit (433.92 MHz) [EXACT]");
         dualPrintln("4. Linear 10-bit (300.00 MHz) [EXACT]");
         dualPrintln("9. UNIVERSAL AUTO-ATTACK (All Combos)");
-        dualPrintln("B. Volver");
+        dualPrintln("B. Back");
         
         char c = waitKey();
         if (c == 'B' || c == 'b') return;
